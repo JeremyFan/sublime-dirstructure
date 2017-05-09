@@ -3,7 +3,7 @@ import sublime_plugin
 import re
 
 class FileNode:
-  def __init__(self, level, isLastChild, nodeStr):
+  def __init__(self, level, isLastChild, nodeStr, parent):
     """
     FileNode constructor
 
@@ -19,6 +19,7 @@ class FileNode:
     self.nodeStr = nodeStr
     self.hasChild = False
     self.children = self.getChildren()
+    self.parent = parent
 
     if len(self.children):
       self.hasChild = True
@@ -87,7 +88,7 @@ class FileNode:
       children = self.splitChild(s)
 
       for i,child in enumerate(children):
-        child = FileNode(self.level + 1, bool(i == len(children) - 1), child)
+        child = FileNode(self.level + 1, bool(i == len(children) - 1), child, self)
         result.append(child)
 
     return result
@@ -101,6 +102,21 @@ class DirStructureCommand(sublime_plugin.TextCommand):
       for i,a in enumerate(node.children):
         self.buildNodeList(node.children[i])
 
+  def prefix(self, node):
+    """
+    Prefix node
+
+    Args:
+      node: node
+
+    Return:
+      string prefix of a node
+    """
+    if node.parent == 'root':
+      return '' 
+    else:
+      return self.prefix(node.parent) + ('    ' if node.parent.isLastChild else '│   ')
+
   def run(self, edit):
     self.nodeList = []
 
@@ -111,13 +127,13 @@ class DirStructureCommand(sublime_plugin.TextCommand):
         arr = s.split('\n')
 
         for i,a in enumerate(arr):
-          node = FileNode(0, bool(i == len(arr) - 1), arr[i])
+          node = FileNode(0, bool(i == len(arr) - 1), arr[i], 'root')
           self.buildNodeList(node)
 
-        result = []
+        result = ['.']
         max = 0
         for j,node in enumerate(self.nodeList):
-          line = node.level * '│   ' + ('└── ' if node.isLastChild else '├── ') + node.text
+          line = self.prefix(node) + ('└── ' if node.isLastChild else '├── ') + node.text
           max = len(line) if max < len(line) else max
           node.line = line
 
