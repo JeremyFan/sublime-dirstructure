@@ -15,6 +15,7 @@ class FileNode:
     self.level = level
     self.isLastChild = isLastChild
     self.text = ''
+    self.comment = ''
     self.nodeStr = nodeStr
     self.hasChild = False
     self.children = self.getChildren()
@@ -114,8 +115,17 @@ class DirStructureCommand(sublime_plugin.TextCommand):
           self.buildNodeList(node)
 
         result = []
+        max = 0
         for j,node in enumerate(self.nodeList):
-          r = node.level * '│   ' + ('└── ' if node.isLastChild else '├── ') + node.text
-          result.append(r)
+          line = node.level * '│   ' + ('└── ' if node.isLastChild else '├── ') + node.text
+          max = len(line) if max < len(line) else max
+          node.line = line
+
+        for k,node in enumerate(self.nodeList):
+          padding = (max + 4 - len(node.line)) * '·'
+          if node.comment:
+            node.line = ' '.join([node.line, padding, node.comment])
+
+          result.append(node.line)
 
         self.view.replace(edit, region, ('\n').join(result))
