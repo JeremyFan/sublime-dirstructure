@@ -62,7 +62,7 @@ class FileNode:
     Args:
       nodeStr: full content string of the node
     """
-    pattern = re.compile(r'^([\w\#\.]+)')
+    pattern = re.compile(r'^([\w\#\-\.\s]+)')
     matched = pattern.match(nodeStr)
 
     if matched and matched.group(1):
